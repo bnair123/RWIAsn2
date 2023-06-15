@@ -1,4 +1,6 @@
-﻿namespace RWIAsn2;
+﻿using System;
+
+namespace RWIAsn2;
 /*
  Controller It’s the class that serves as a bridge between the user and the calculator. It contains
 references to both the Parser and Calculator objects as well as the TextMenu class. Those are passed
@@ -7,51 +9,68 @@ tokens and Calculator for evaluating lexed expressions. The communication with a
 the TextMenu class. The Run method of the Controller class contains an infinite loop that accepts user
 input, interprets it and reacts accordingly by calling the methods of its subobjects.
  */
-class Controller
+public interface IController
 {
-    private ICalculator _calc;
+    void Run();
+}
+
+public class Controller : IController
+{
+    private IRPNCalculator _calculator;
     private IParser _parser;
     private IMenu _menu;
-    public Controller(ICalculator calc, IParser parser, IMenu menu) { ...}
-    // the main run loop that accepts user input in a loop
+
+    public Controller(IRPNCalculator calculator, IParser parser, IMenu menu)
+    {
+        _calculator = calculator;
+        _parser = parser;
+        _menu = menu;
+    }
+
     public void Run()
     {
-        Menu.ShowMenu();
-        var input = string.Empty;
+        _menu.ShowMenu();
+
+        string input = string.Empty;
+
         do
         {
             Console.Write("> ");
             input = Console.ReadLine() ?? "quit";
+
             switch (input)
             {
                 case "q":
                     break;
                 case "h":
-                    Menu.ShowHelp();
+                    _menu.ShowHelp();
                     break;
                 case "o":
-                    Menu.ShowOperations();
+                    _menu.ShowOperations();
                     break;
                 default:
-                    // an RPN expression is expected here
+                    // An RPN expression is expected here
                     try
                     {
-                        var split = Parser.Tokenize(input);
+                        var split = _parser.Tokenize(input);
                         if (split.Count != 0)
                         {
-                            var tokens = Parser.Lex(split);
-                            var result = Calculator.Calculate(tokens);
+                            var tokens = _parser.Lex(split);
+                            var result = _calculator.Calculate((List<Token>)tokens);
                             Console.WriteLine($"\n {result}\n");
                         }
                     }
-                    // if the input is not valid, an exception is thrown by calculator or parser
+                    // If the input is not valid, an exception is thrown by calculator or parser
                     catch (FormatException e)
                     {
                         Console.WriteLine(e.Message);
                     }
                     break;
             }
-        } while (!input.ToLower().Equals("q");
+
+        } while (!input.ToLower().Equals("q"));
+
         Console.WriteLine("\n Calculator is quitting. Bye!");
     }
 }
+

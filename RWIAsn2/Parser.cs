@@ -1,16 +1,53 @@
-﻿namespace RWIAsn2;
-/*
- Parser The Parser class is responsible for parsing user input and validating it. It takes a List of
-supported operators (e.g. ["+", "-", "sqrt"]) in its constructor. The Parser class has two methods of
-interest: Tokenize and Lex. Tokenize takes a string and splits it into a List of string objects. Splitting
-is done on whitespace characters. Lex takes a List of strings returned by Tokenize and validates them
-by checking if each item is a either a number or a supported operator. If it is, it creates a Token and adds
-it to a List of Token objects. This List of Token objects is returned by the Lex method.
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
- */
-public class Parser
+namespace RWIAsn2
 {
-	public Parser() 
-	{
-	}
+    public interface IParser
+    {
+        IList<string> SupportedOperators { get; }
+        IList<string> Tokenize(string expression);
+        IList<Token> Lex(IList<string> tokens);
+    }
+
+    public class Parser : IParser
+    {
+        public IList<string> SupportedOperators { get; private set; }
+
+        public Parser(IList<string> supportedOperators)
+        {
+            SupportedOperators = supportedOperators ?? new List<string>();
+        }
+
+        public IList<string> Tokenize(string expression)
+        {
+            return expression.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
+        }
+
+        public IList<Token> Lex(IList<string> tokens)
+        {
+            IList<Token> lexedTokens = new List<Token>();
+
+            foreach (var token in tokens)
+            {
+                if (SupportedOperators.Contains(token))
+                {
+                    lexedTokens.Add(new Token(TokenType.Operator, token));
+                }
+                else if (double.TryParse(token, out var numericValue))
+                {
+                    lexedTokens.Add(new Token(TokenType.Number, token, numericValue));
+                }
+                else
+                {
+                    throw new FormatException($"Invalid token: {token}");
+                }
+            }
+
+            return lexedTokens;
+        }
+
+    }
+
 }
